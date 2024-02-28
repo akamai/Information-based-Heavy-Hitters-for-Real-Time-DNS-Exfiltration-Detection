@@ -20,7 +20,7 @@ from utils import write_list_to_file
 
 if __name__ == "__main__":
     filename = pt_dataset_path
-    query_stream = read_dns_queries(filename)
+    record_stream = read_dns_queries(filename)
     current_window = 0
     ibhh = None
     with open(detection_threshold_path, "r") as f:
@@ -28,8 +28,8 @@ if __name__ == "__main__":
     print(f"Detection threshold: {detection_threshold}")
     pt_allow_list = set()
     extract = TLDExtract()
-    for query in query_stream:
-        comma_split = query.split(",")
+    for record in record_stream:
+        comma_split = record.split(",")
         timestamp = int(comma_split[0])
         dns_query = comma_split[1]
         extracted = extract(dns_query)
