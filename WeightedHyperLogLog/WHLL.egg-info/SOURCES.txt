@@ -1,0 +1,7 @@
+setup.py
+WHLL.egg-info/PKG-INFO
+WHLL.egg-info/SOURCES.txt
+WHLL.egg-info/dependency_links.txt
+WHLL.egg-info/top_level.txt
+lib/murmur2.c
+src/whll.c

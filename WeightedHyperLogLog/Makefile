@@ -3,7 +3,7 @@ build:
 clean:
 	python setup.py clean
 	python3 setup.py clean
-	python3.8 setup.py clean
+	python3.10 setup.py clean
 	rm -r ./build/
 	rm -r ./dist/
 install:

@@ -15,7 +15,6 @@
 from tldextract import TLDExtract
 from config import pt_dataset_path, pt_path, detection_threshold_path
 from ibHH.InformationBasedHeavyHitter import InformationBasedHeavyHitter
-from time import time
 from read_dns_queries import read_dns_queries
 from utils import write_list_to_file
 
@@ -25,24 +24,20 @@ if __name__ == "__main__":
     k = 1000
     current_window = 0
     time_window = 120000
-    total_time = 0
-    total_time_without_tldextract = 0
     ibhh = None
     with open(detection_threshold_path, "r") as f:
         detection_threshold = int(f.read())
-    print(detection_threshold)
+    print(f'Detection threshold: {detection_threshold}')
     pt_allow_list = set()
-    extract = TLDExtract(include_psl_private_domains=False)
+    extract = TLDExtract()
     for query in query_stream:
         comma_split = query.split(",")
         timestamp = int(comma_split[0])
         dns_query = comma_split[1]
-        start_time = time()
         extracted = extract(dns_query)
         domain = extracted.registered_domain.lower()
         subdomain = extracted.subdomain
 
-        start_time_without = time()
         if timestamp > current_window + time_window:
             ibhh = InformationBasedHeavyHitter(k=k)
             current_window = timestamp
@@ -50,14 +45,5 @@ if __name__ == "__main__":
         count = ibhh.count_domain_information(domain)
         if count > detection_threshold:
             pt_allow_list.add(domain)
-        end_time = time()
-        total_time += end_time - start_time
-        total_time_without_tldextract += end_time - start_time_without
-    print(
-        f"it took {total_time} to process {n} queries, or {n / (total_time)} queries per second"
-    )
-    print("======= WITHOUT tldextract =======")
-    print(
-        f"it took {total_time_without_tldextract} to process {n} queries, or {n / (total_time_without_tldextract)} queries per second"
-    )
+
     write_list_to_file(pt_path, pt_allow_list)

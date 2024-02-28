@@ -1,5 +1,36 @@
+/*MIT License
+
+Copyright 2014 Joshua Andersen
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+
+/*
+This file is based upon https://github.com/ascv/HyperLogLog/blob/master/src/hll.c which is licensed under MIT
+The HyperLogLog_add function has been adjusted to solve the weighted cardinality estimation problem,
+instead of the count distinct problem.
+Other than that and some naming changes, the files are identical.
+*/
+
 #define PY_SSIZE_T_CLEAN
-#define WHLL_VERSION "2.0.3"
+#define WHLL_VERSION "0.0.1"
 
 #include <math.h>
 #include <Python.h>
@@ -453,6 +484,7 @@ static void HyperLogLog_dealloc(WeightedHyperLogLog* self)
 
 
 /* Add a weighted element. The weight is the size (in bytes) of the elements. */
+
 static PyObject* HyperLogLog_add(WeightedHyperLogLog* self, PyObject* args)
 {
     uint8_t* data;
@@ -460,13 +492,13 @@ static PyObject* HyperLogLog_add(WeightedHyperLogLog* self, PyObject* args)
     uint64_t hash, index, newFsb;
     bool updated = false;
     if (!PyArg_ParseTuple(args, "s#", &data, &dataLen)) return NULL;
-    for(uint8_t i=0; i<dataLen; ++i){
+    for(uint16_t i=0; i<dataLen; ++i){
         data[i]++;
         hash = MurmurHash64A((void*)(data), dataLen, self->seed);
         data[i]--;
-        index = (hash >> (64 - self->p)); /* Use the first p bits as an index */
-        newFsb = (hash << self->p); /* Remove the first p bits */
-        newFsb = clz(newFsb) + 1; /* Find the first set bit in the remaining bits */
+        index = (hash >> (64 - self->p));
+        newFsb = (hash << self->p);
+        newFsb = clz(newFsb) + 1;
         updated = setRegister(self, index, (uint8_t)newFsb);
     }
     if (updated) {
@@ -475,27 +507,6 @@ static PyObject* HyperLogLog_add(WeightedHyperLogLog* self, PyObject* args)
         Py_RETURN_FALSE;
     }
 };
-
-//static PyObject* HyperLogLog_add(WeightedHyperLogLog* self, PyObject* args)
-//{
-//    const uint8_t* data;
-//    const uint64_t dataLen;
-//    uint64_t hash, index, newFsb;
-//
-//    if (!PyArg_ParseTuple(args, "s#", &data, &dataLen)) return NULL;
-//    hash = MurmurHash64A((void*)data, dataLen, self->seed);
-//
-//    index = (hash >> (64 - self->p)); /* Use the first p bits as an index */
-//    newFsb = hash << self->p; /* Remove the first p bits */
-//    newFsb = clz(newFsb) + 1; /* Find the first set bit in the remaining bits */
-//    bool updated = setRegister(self, index, (uint8_t)newFsb);
-//
-//    if (updated) {
-//        Py_RETURN_TRUE;
-//    } else {
-//        Py_RETURN_FALSE;
-//    }
-//};
 
 
 /* Get a cardinality estimate */

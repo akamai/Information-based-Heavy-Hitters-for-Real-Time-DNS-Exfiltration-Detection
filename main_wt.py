@@ -25,8 +25,6 @@ from config import (
     time_window,
 )
 from ibHH.InformationBasedHeavyHitter import InformationBasedHeavyHitter
-from time import time
-
 from metrics.metrics import true_positive_rate, false_positive_rate
 from read_dns_queries import read_dns_queries
 from utils import write_list_to_file, read_list_from_file
@@ -44,23 +42,19 @@ if __name__ == "__main__":
     filename = wt_dataset_path
     record_stream = read_dns_queries(filename)
     current_window = 0
-    total_time = 0
-    total_time_without_tldextract = 0
     ibhh = None
     with open(detection_threshold_path, "r") as f:
         detection_threshold = int(f.read())
     print(f"detection threshold: {detection_threshold}")
-    extract = tldextract.TLDExtract(include_psl_private_domains=False)
+    extract = tldextract.TLDExtract()
     for record in record_stream:
-        splitted = record.split(",")
-        timestamp = int(splitted[0])
-        dns_query = splitted[1]
-        start_time = time()
+        comma_split = record.split(",")
+        timestamp = int(comma_split[0])
+        dns_query = comma_split[1]
         extracted = extract(dns_query)
         domain = extracted.registered_domain.lower()
         subdomain = extracted.subdomain
         all_domains.add(domain)
-        start_time_without = time()
         if timestamp > current_window + time_window:
             ibhh = InformationBasedHeavyHitter(k=k)
             current_window = timestamp
@@ -68,26 +62,15 @@ if __name__ == "__main__":
         count = ibhh.count_domain_information(domain)
         if count > detection_threshold:
             detections.add(domain)
-        end_time = time()
-        total_time += end_time - start_time
-        total_time_without_tldextract += end_time - start_time_without
-    print(
-        f"it took {total_time} to process {n} queries, or {n / (total_time)} queries per second"
-    )
-    print("======= WITHOUT tldextract =======")
-    print(
-        f"it took {total_time_without_tldextract} to process {n} queries, or {n / (total_time_without_tldextract)} queries per second"
-    )
 
     detections = detections.difference(allow_list)
-    print(f"num detections (after allow-listing):{len(detections)}")
+    print(f"num detections: {len(detections)}")
     write_list_to_file(detections_path, list(detections))
-    print(detections)
     tp = detections.intersection(dns_exf_domains)
     fp = detections.difference(dns_exf_domains)
     fn = dns_exf_domains.difference(tp)
     tn = all_domains.difference(tp).difference(fp)
     tpr = true_positive_rate(len(tp), len(fn))
     fpr = false_positive_rate(len(fp), len(tn))
-    print(f"TP: {len(tp)} FP: {len(fp)}, total detections: {len(detections)}")
+    print(f"Total detections: {len(detections)}, TP: {len(tp)} FP: {len(fp)}")
     print(f"TPR: {tpr}, FPR: {fpr}")

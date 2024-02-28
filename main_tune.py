@@ -27,8 +27,6 @@ from config import (
     k,
 )
 from ibHH.InformationBasedHeavyHitter import InformationBasedHeavyHitter
-from time import time
-
 from read_dns_queries import read_dns_queries
 
 if __name__ == "__main__":
@@ -38,21 +36,17 @@ if __name__ == "__main__":
     df_global_allow_list = df_global_allow_list.rename(columns={0: "rank", 1: "domain"})
     global_allow_list = set(df_global_allow_list["domain"].tolist())
     current_window = 0
-    total_time = 0
-    total_time_without_tldextract = 0
     ibhh = None
     count_train = {}
-    extract = tldextract.TLDExtract(include_psl_private_domains=False)
+    extract = tldextract.TLDExtract()
     print(f"tuning for acceptable FPR of {acceptable_fpr}")
     for record in record_stream:
         comma_split = record.split(",")
         timestamp = int(comma_split[0])
         dns_query = comma_split[1]
-        start_time = time()
         extracted = extract(dns_query)
         domain = extracted.registered_domain.lower()
         subdomain = extracted.subdomain
-        start_time_without = time()
         if timestamp > current_window + time_window:
             ibhh = InformationBasedHeavyHitter(k=k)
             current_window = timestamp
@@ -62,19 +56,8 @@ if __name__ == "__main__":
         if domain not in count_train or count_train[domain] < count:
             count_train[domain] = count
 
-        end_time = time()
-        total_time += end_time - start_time
-        total_time_without_tldextract += end_time - start_time_without
-    print(
-        f"it took {total_time} to process {n} queries, or {n / (total_time)} queries per second"
-    )
-    print("======= WITHOUT tldextract =======")
-    print(
-        f"it took {total_time_without_tldextract} to process {n} queries, or {n / (total_time_without_tldextract)} queries per second"
-    )
-
-    with open("count_train.pkl", "wb") as f:
-        pickle.dump(count_train, f)
+    # with open("count_train.pkl", "wb") as f:
+    #     pickle.dump(count_train, f)
 
     keys = list(
         set(count_train.keys()).difference(global_allow_list.union(dns_exf_domains))
@@ -85,7 +68,5 @@ if __name__ == "__main__":
     values = sorted(count_train.values(), reverse=True)
     detection_threshold = values[acceptable_fps] + 1
     with open(detection_threshold_path, "w") as f:
-        print(
-            f"detection_threshold: {detection_threshold}, or {detection_threshold / 120} B/s"
-        )
+        print(f"detection_threshold: {detection_threshold}")
         f.write(str(detection_threshold))
