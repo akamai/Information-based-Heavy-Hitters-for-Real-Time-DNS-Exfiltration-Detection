@@ -56,9 +56,6 @@ if __name__ == "__main__":
         if domain not in count_train or count_train[domain] < count:
             count_train[domain] = count
 
-    # with open("count_train.pkl", "wb") as f:
-    #     pickle.dump(count_train, f)
-
     keys = list(
         set(count_train.keys()).difference(global_allow_list.union(dns_exf_domains))
     )
