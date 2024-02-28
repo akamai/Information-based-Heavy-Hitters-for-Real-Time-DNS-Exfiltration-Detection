@@ -16,10 +16,6 @@ from WHLL import WeightedHyperLogLog
 import mmh3
 
 
-def get_int_value(pair):
-    return pair[1][1]
-
-
 class InformationBasedHeavyHitter(object):
     def __init__(self, k, threshold=2 ** 128):
         self.information_counters = {}
