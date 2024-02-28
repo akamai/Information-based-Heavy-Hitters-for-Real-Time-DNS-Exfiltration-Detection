@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from tldextract import TLDExtract
-from config import pt_dataset_path, pt_path, detection_threshold_path
+from config import pt_dataset_path, pt_path, detection_threshold_path, k, time_window
 from ibHH.InformationBasedHeavyHitter import InformationBasedHeavyHitter
 from read_dns_queries import read_dns_queries
 from utils import write_list_to_file
@@ -21,13 +21,11 @@ from utils import write_list_to_file
 if __name__ == "__main__":
     filename = pt_dataset_path
     query_stream = read_dns_queries(filename)
-    k = 1000
     current_window = 0
-    time_window = 120000
     ibhh = None
     with open(detection_threshold_path, "r") as f:
         detection_threshold = int(f.read())
-    print(f'Detection threshold: {detection_threshold}')
+    print(f"Detection threshold: {detection_threshold}")
     pt_allow_list = set()
     extract = TLDExtract()
     for query in query_stream:
