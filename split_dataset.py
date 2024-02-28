@@ -40,21 +40,13 @@ def write_df(df, path, columns=None):
 if __name__ == "__main__":
     df = load_dataframe(preprocessed_dataset_path)
     df["date"] = pd.to_datetime(df["timestamp"], unit="ms")
-    # df["subdomain"].fillna("", inplace=True)
-    # df["domain"].fillna("", inplace=True)
-    # df["domain"] = df["domain"].str.lower()
     tune_cutoff_date = df["date"].min() + timedelta(hours=tuning_cutoff_delta)
     peace_time_cutoff_date = df["date"].min() + timedelta(hours=pt_cutoff_delta)
-    #
+
     df_tune = df[df["date"] < tune_cutoff_date]
     df_pt = df[(df["date"] >= tune_cutoff_date) & (df["date"] < peace_time_cutoff_date)]
     df_wt = df[df["date"] > peace_time_cutoff_date]
-    #
-    # # columns = ['timestamp', 'qname']
-    # # columns = ['timestamp', 'domain', 'subdomain']
+
     df_tune.sort_values(by="timestamp").to_csv(tuning_dataset_path, index=False)
     df_pt.sort_values(by="timestamp").to_csv(pt_dataset_path, index=False)
     df_wt.sort_values(by="timestamp").to_csv(wt_dataset_path, index=False)
-    # write_df(df_train, tuning_dataset_path)
-    # write_df(df_pt, pt_dataset_path)
-    # write_df(df_wt, wt_dataset_path)
