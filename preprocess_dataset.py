@@ -21,34 +21,6 @@ from config import (
     preprocessed_dataset_path,
 )
 
-import tldextract
-
-
-def extract_domain_subdomain(fqdn):
-    extracted_info = tldextract.extract(fqdn)
-    return pd.Series(
-        {
-            "domain": extracted_info.registered_domain.lower(),
-            "subdomain": extracted_info.subdomain,
-        }
-    )
-
-
-# def preprocess(input_path, output_path, columns, columns_to_extract, chunk_size=500000):
-#     i = 0
-#     for chunk in pd.read_csv(
-#         input_path, header=None, names=columns, chunksize=chunk_size
-#     ):
-#         subset_chunk = chunk[columns_to_extract]
-#         # subset_chunk[["domain", "subdomain"]] = subset_chunk["request"].apply(
-#         #     extract_domain_subdomain
-#         # )
-#         if i == 0:
-#             subset_chunk.to_csv(output_path, index=False, header=True, mode="a")
-#         else:
-#             subset_chunk.to_csv(output_path, index=False, header=False, mode="a")
-#         i += 1
-
 
 def preprocess(input_path, output_path, columns, columns_to_extract):
     df = pd.read_csv(input_path, header=None, names=columns)
